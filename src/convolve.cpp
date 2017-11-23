@@ -13,6 +13,7 @@ int main(int argc, char *argv[])
     ofstream outFile;
 
     WaveFile dryWav;
+    WaveFile irWav;
 
     if(argc != 4)
 	{
@@ -26,21 +27,6 @@ int main(int argc, char *argv[])
         outFileName = argv[3];
     }
 
-    /*
-    dryFile.open(dryFileName.c_str(), ios::binary | ios::in);
-    if(dryFile.fail())
-    {
-        cout << "Failed to open dry recording file!" << endl;
-        exit(-1);
-    }
-
-    irFile.open(irFileName.c_str(), ios::binary | ios::in);
-    if(irFile.fail())
-    {
-        cout << "Failed to open impulse response file!" << endl;
-        exit(-1);
-    }
-    */
     if(!fileExists(dryFileName))
     {
         cout << "Error: " << dryFileName << " does not exist!" << endl;
@@ -70,11 +56,18 @@ int main(int argc, char *argv[])
     */
 
     dryWav.openFile(dryFileName);
+
+    cout << "dryWav" << endl;
+    cout << "File: " << dryWav.getOpenFileName() << endl;
     dryWav.printWaveHeader();
     dryWav.printDataChunkHeader();
 
-    cout << dryFileName << " " << irFileName << " " << outFileName << endl; //debug
+    irWav.openFile(irFileName);
 
+    cout << "irWav" << endl;
+    cout << "File: " << irWav.getOpenFileName() << endl;
+    irWav.printWaveHeader();
+    irWav.printDataChunkHeader();
 
 
 }

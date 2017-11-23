@@ -12,7 +12,7 @@ typedef struct
     uint32_t chunkSize;         // 4 bytes - Size of remaining file in bytes (36 + data chunk size)
     uint8_t format[4];          // 4 bytes - "WAVE"
     uint8_t fmtChunkID[4];      // 4 bytes - "fmt "
-    uint32_t fmtChunkSize;      // 4 bytes - should be 16
+    uint32_t fmtChunkSize;      // 4 bytes - Size of the fmt sub chunk (should be 16, may be slightly more)
     uint16_t audioFormat;       // 2 bytes - 1 = PCM
     uint16_t numChannels;       // 2 bytes - 1 = mono, 2 = stereo, etc          
     uint32_t sampleRate;        // 4 bytes - Samples per second (eg 44100 Hz)    
@@ -39,13 +39,17 @@ public:
     std::string getHeaderFormat();
     std::string getFmtChunkID();
     std::string getDataChunkID();
+    std::string getOpenFileName();
     void printWaveHeader();
     void printDataChunkHeader();
 
 private:
     WaveHeader waveHeader;
     DataChunkHeader dataHeader;
-    float* sampleData;          //will become an array
+    uint16_t* sampleData = NULL;          //will become an array
+    uint32_t sampleCount;
+    std::string wavFileName;
+    bool fileOpen;
 
 
     
