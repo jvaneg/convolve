@@ -5,8 +5,6 @@ using namespace std;
 WaveFile::WaveFile()
 {
     //todo
-    sampleCount = 0;
-    fileOpen = false;
 }
 
 WaveFile::~WaveFile()
@@ -15,12 +13,49 @@ WaveFile::~WaveFile()
     sampleData = NULL;
 }
 
+void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, int16_t* sampleData)
+{
+    waveHeader.chunkID[0] = 'R';
+    waveHeader.chunkID[1] = 'I';
+    waveHeader.chunkID[2] = 'F';
+    waveHeader.chunkID[3] = 'F';
+
+    waveHeader.chunkSize = (uint32_t) sizeof(WaveHeader) + dataChunkSize;
+
+    waveHeader.format[0] = 'W';
+    waveHeader.format[1] = 'A';
+    waveHeader.format[2] = 'V';
+    waveHeader.format[3] = 'E';
+
+    waveHeader.fmtChunkID[0] = 'f';
+    waveHeader.fmtChunkID[1] = 'm';
+    waveHeader.fmtChunkID[2] = 't';
+    waveHeader.fmtChunkID[3] = ' ';
+
+    waveHeader.fmtChunkSize = 16;
+    waveHeader.audioFormat = audioFormat;
+    waveHeader.numChannels = numChannels;
+    waveHeader.sampleRate = sampleRate;
+    waveHeader.byteRate = sampleRate*numChannels*bitsPerSample/8;
+    waveHeader.blockAlign = (uint16_t)(numChannels*bitsPerSample/8);
+    waveHeader.bitsPerSample = bitsPerSample;
+
+    dataHeader.dataChunkID[0] = 'd';
+    dataHeader.dataChunkID[1] = 'a';
+    dataHeader.dataChunkID[2] = 't';
+    dataHeader.dataChunkID[3] = 'a';
+
+    dataHeader.dataChunkSize = dataChunkSize;
+    this->sampleData = sampleData;
+
+    sampleCount = dataHeader.dataChunkSize/(waveHeader.bitsPerSample/8);
+
+    return;
+}
+
 bool WaveFile::openFile(string fileName)
 {
     ifstream inFile;
-
-    wavFileName = fileName;
-    fileOpen = true;
 
     inFile.open(fileName.c_str(), ios::binary | ios::in);
     if(inFile.fail())
@@ -69,7 +104,7 @@ bool WaveFile::openFile(string fileName)
         return false;
     }
 
-    sampleData = new uint16_t[sampleCount];
+    sampleData = new int16_t[sampleCount];
     for(uint32_t i = 0; i < sampleCount; i++)
     {
         inFile.read((char*) &sampleData[i], sizeof(uint16_t));
@@ -86,6 +121,37 @@ bool WaveFile::openFile(string fileName)
     return true;
 }
 
+
+bool WaveFile::writeFile(string fileName)
+{
+    ofstream outFile;
+    uint8_t emptyByte = 0;
+
+    outFile.open(fileName.c_str(), ios::binary | ios::out);
+    if(outFile.fail())
+    {
+        cout << "Failed to open output file!" << endl;
+        return false;
+    }
+
+    outFile.write((char*) &waveHeader, sizeof(WaveHeader));
+
+    if(waveHeader.fmtChunkSize > 16)
+    {
+        for(uint8_t i = 0; i < (waveHeader.fmtChunkSize - (sizeof(WaveHeader) - 20)); i++)
+        {
+            outFile.write((char*) &emptyByte, sizeof(uint8_t));
+        }
+    }
+
+    outFile.write((char*) &dataHeader, sizeof(DataChunkHeader));
+    if(sampleData != NULL)
+    {
+        outFile.write((char*) sampleData, dataHeader.dataChunkSize);
+    }
+
+    return true;
+}
 
 
 
@@ -118,17 +184,6 @@ string WaveFile::getDataChunkID()
     return dataChunkID;
 }
 
-string WaveFile::getOpenFileName() //TODO change this to do exception handling or something
-{
-    if(fileOpen)
-    {
-        return wavFileName;
-    }
-    else
-    {
-        return "no file open"; //lol
-    }
-}
 
 void WaveFile::printWaveHeader()
 {

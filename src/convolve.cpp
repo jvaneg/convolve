@@ -8,8 +8,6 @@ int main(int argc, char *argv[])
     string dryFileName;
     string irFileName;
     string outFileName;
-    ifstream dryFile;
-    ifstream irFile;
     ofstream outFile;
 
     WaveFile dryWav;
@@ -58,16 +56,17 @@ int main(int argc, char *argv[])
     dryWav.openFile(dryFileName);
 
     cout << "dryWav" << endl;
-    cout << "File: " << dryWav.getOpenFileName() << endl;
     dryWav.printWaveHeader();
     dryWav.printDataChunkHeader();
 
     irWav.openFile(irFileName);
 
     cout << "irWav" << endl;
-    cout << "File: " << irWav.getOpenFileName() << endl;
     irWav.printWaveHeader();
     irWav.printDataChunkHeader();
+
+    cout << "writing to file" << endl;
+    dryWav.writeFile(outFileName);
 
 
 }

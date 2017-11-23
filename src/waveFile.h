@@ -34,22 +34,29 @@ public:
     WaveFile();
     ~WaveFile();
     bool openFile(std::string fileName);
+    bool writeFile(std::string fileName);
+    void generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, int16_t* sampleData);
+    void printWaveHeader();
+    void printDataChunkHeader();
 
+    uint16_t getAudioFormat();
+    uint16_t getNumChannels();
+    uint32_t getSampleRate();
+    uint16_t getBitsPerSample();
+    uint32_t getDataChunkSize();
+    uint16_t* getSampleData();
+
+
+private:
     std::string getHeaderChunkID();
     std::string getHeaderFormat();
     std::string getFmtChunkID();
     std::string getDataChunkID();
-    std::string getOpenFileName();
-    void printWaveHeader();
-    void printDataChunkHeader();
 
-private:
     WaveHeader waveHeader;
     DataChunkHeader dataHeader;
-    uint16_t* sampleData = NULL;          //will become an array
+    int16_t* sampleData = NULL;          //will become an array
     uint32_t sampleCount;
-    std::string wavFileName;
-    bool fileOpen;
 
 
     
