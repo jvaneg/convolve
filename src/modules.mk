@@ -57,7 +57,7 @@
 #program name
 PROG=convolve
 #main module list
-MODULES=convolve.o
+MODULES=convolve.o waveFile.o
 #test module list
 TMODULES=
 #delete method, (IN/EX)CLUSIVE

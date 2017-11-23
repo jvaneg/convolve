@@ -12,6 +12,8 @@ int main(int argc, char *argv[])
     ifstream irFile;
     ofstream outFile;
 
+    WaveFile dryWav;
+
     if(argc != 4)
 	{
 		cout << "Input format: convolve [dry recording file] [impulse response file] [desired output file name]" << endl;
@@ -24,6 +26,7 @@ int main(int argc, char *argv[])
         outFileName = argv[3];
     }
 
+    /*
     dryFile.open(dryFileName.c_str(), ios::binary | ios::in);
     if(dryFile.fail())
     {
@@ -37,20 +40,38 @@ int main(int argc, char *argv[])
         cout << "Failed to open impulse response file!" << endl;
         exit(-1);
     }
+    */
+    if(!fileExists(dryFileName))
+    {
+        cout << "Error: " << dryFileName << " does not exist!" << endl;
+        exit(-1);
+    }
+
+    if(!fileExists(irFileName))
+    {
+        cout << "Error: " << irFileName << " does not exist!" << endl;
+        exit(-1);
+    }
 
     if(fileExists(outFileName))
     {
-        cout << "Error: Output file already exists!" << endl;
+        cout << "Error: " << outFileName << " already exists!" << endl;
         exit(-1);
     }
     
     //maybe try opening later
+    /*
     outFile.open(outFileName.c_str(), ios::binary | ios::out);
     if(outFile.fail())
     {
         cout << "Failed to open output file!" << endl;
         exit(-1);
     }
+    */
+
+    dryWav.openFile(dryFileName);
+    dryWav.printWaveHeader();
+    dryWav.printDataChunkHeader();
 
     cout << dryFileName << " " << irFileName << " " << outFileName << endl; //debug
 
