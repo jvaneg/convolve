@@ -5,7 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
-#include <cmath>
+#include <cmath>        //power
 
 typedef struct
 {
@@ -34,7 +34,7 @@ class WaveFile
 public:
     WaveFile();
     ~WaveFile();
-    bool openFile(std::string fileName);
+    bool loadFile(std::string fileName);
     bool writeFile(std::string fileName);
     void generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, double* sampleData);
     void printWaveHeader();
@@ -45,7 +45,7 @@ public:
     uint32_t getSampleRate();
     uint16_t getBitsPerSample();
     uint32_t getDataChunkSize();
-    double* getSampleData(); //be careful with me i can cause segfaults! im only here to avoid massive memory usage!
+    double* getSampleData();    //be careful with me I can cause segfaults! I'm only here to avoid massive memory usage!
     uint32_t getSampleCount();
 
 
@@ -57,14 +57,9 @@ private:
 
     WaveHeader waveHeader;
     DataChunkHeader dataHeader;
-    double* sampleData = NULL;          //will become an array
+    double* sampleData = NULL;  //will become an array
     uint32_t sampleCount;
-
-
     
-    
-
-
 };
 
 

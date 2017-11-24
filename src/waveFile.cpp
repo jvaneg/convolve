@@ -2,17 +2,41 @@
 
 using namespace std;
 
+/*----------Public Functions----------*/
+
+/*
+Name: WaveFile
+Class: WaveFile
+Purpose: Default constructor for the WaveFile class
+*/
 WaveFile::WaveFile()
 {
     //todo
 }
 
+/*
+Name: ~WaveFile
+Class: WaveFile
+Purpose: Default destructor for the WaveFile class
+*/
 WaveFile::~WaveFile()
 {
     delete[] sampleData;
     sampleData = NULL;
 }
 
+/*
+Name: generate
+Class: WaveFile
+Purpose: Populates a WaveFile header and body
+Input:  
+    audioFormat -   compression type of audio format, type uint16_t
+    numChannels -   number of channels in the wav, type uint16_t
+    sampleRate  -   sample rate in Hz of wav, type uint32_t
+    bitsPerSample   -   number of bits in each sample, type uint16_t
+    dataChunkSize   -   size in bytes of the data chunk, type uint32_t
+    sampleData  -   pointer to the array of sample data, type double*
+*/
 void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, double* sampleData)
 {
     waveHeader.chunkID[0] = 'R';
@@ -58,7 +82,17 @@ void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sam
     return;
 }
 
-bool WaveFile::openFile(string fileName)
+/*
+Name: loadFile
+Class: WaveFile
+Purpose: loads WaveFile data from a .wav file
+Details: does not support multichannel wavs, wavs other than 16-bit sample size
+Input:  
+    fileName    -   the name of the file to load, type string
+
+Returns: true if succeeded, false if failed
+*/
+bool WaveFile::loadFile(string fileName)
 {
     ifstream inFile;
     uint16_t sample16Bit;
@@ -128,7 +162,16 @@ bool WaveFile::openFile(string fileName)
     return true;
 }
 
+/*
+Name: writeFile
+Class: WaveFile
+Purpose: writes WaveFile data to a .wav file
+Details: does not support multichannel wavs, wavs other than 16-bit sample size
+Input:  
+    fileName    -   the name of the file to write to, type string
 
+Returns: true if succeeded, false if failed
+*/
 bool WaveFile::writeFile(string fileName)
 {
     ofstream outFile;
@@ -174,37 +217,11 @@ bool WaveFile::writeFile(string fileName)
 }
 
 
-
-
-string WaveFile::getHeaderChunkID()
-{
-    string chunkID((char*) waveHeader.chunkID, sizeof(waveHeader.chunkID));
-
-    return chunkID;
-}
-
-string WaveFile::getHeaderFormat()
-{
-    string format((char*) waveHeader.format, sizeof(waveHeader.format));
-
-    return format;
-}
-
-string WaveFile::getFmtChunkID()
-{
-    string fmtChunkID((char*) waveHeader.fmtChunkID, sizeof(waveHeader.fmtChunkID));
-
-    return fmtChunkID;
-}
-
-string WaveFile::getDataChunkID()
-{
-    string dataChunkID((char*) dataHeader.dataChunkID, sizeof(dataHeader.dataChunkID));
-
-    return dataChunkID;
-}
-
-
+/*
+Name: printWaveHeader
+Class: WaveFile
+Purpose: prints out the wave header information, mainly for debug
+*/
 void WaveFile::printWaveHeader()
 {
     cout << "ChunkID : " << getHeaderChunkID() << endl
@@ -220,43 +237,153 @@ void WaveFile::printWaveHeader()
     << "BitsPerSample: " << waveHeader.bitsPerSample << endl;
 }
 
+/*
+Name: printDataChunkHeader
+Class: WaveFile
+Purpose: prints out the data chunk header information, mainly for debug
+*/
 void WaveFile::printDataChunkHeader()
 {
     cout << "Subchunk2ID : " << getDataChunkID() << endl
     << "Subchunk2Size : " << dataHeader.dataChunkSize << endl;
 }
 
+/*
+Name: getAudioFormat
+Class: WaveFile
+Purpose: returns the audio format
+Returns: the audio format, type uint16_t
+*/
 uint16_t WaveFile::getAudioFormat()
 {
     return waveHeader.audioFormat;
 }
 
+/*
+Name: getNumChannels
+Class: WaveFile
+Purpose: returns the number of channels
+Returns: the number of channels, type uint16_t
+*/
 uint16_t WaveFile::getNumChannels()
 {
     return waveHeader.numChannels;
 }
 
+/*
+Name: getSampleRate
+Class: WaveFile
+Purpose: returns the sample rate in Hz
+Returns: the sample rate, type uint32_t
+*/
 uint32_t WaveFile::getSampleRate()
 {
     return waveHeader.sampleRate;
 }
 
+/*
+Name: getNumChannels
+Class: WaveFile
+Purpose: returns the number of bits per sample
+Returns: the number of bits per sample, type uint16_t
+*/
 uint16_t WaveFile::getBitsPerSample()
 {
     return waveHeader.bitsPerSample;
 }
 
+/*
+Name: getDataChunkSize
+Class: WaveFile
+Purpose: returns the data chunk in bytes
+Returns: the size of the data chunk in bytes, type uint32_t
+*/
 uint32_t WaveFile::getDataChunkSize()
 {
     return dataHeader.dataChunkSize;
 }
-    
+
+/*
+Name: getSampleData
+Class: WaveFile
+Purpose: returns the a pointer to the array of samples
+Warning!!!!!: Be careful with me, the contents of this pointer get deleted in the constructor, so if youre not careful with this
+              it can cause a segfault!
+              This is bad practice but the size of the data is really big and I don't want to duplicate it
+Returns: pointer to the array of samples, type double*
+*/
 double* WaveFile::getSampleData()
 {
     return sampleData;
 }
 
+/*
+Name: getSampleCount
+Class: WaveFile
+Purpose: returns the number of samples in the file
+Returns: the number of samples, type uint32_t
+*/
 uint32_t WaveFile::getSampleCount()
 {
     return sampleCount;
+}
+
+
+/*----------Private Functions----------*/
+
+
+/*
+Name: getHeaderChunkID
+Class: WaveFile
+Purpose: returns the headerID of the wave header chunk
+Details: should be "RIFF"
+Returns: the wave header ID, type string
+*/
+string WaveFile::getHeaderChunkID()
+{
+    string chunkID((char*) waveHeader.chunkID, sizeof(waveHeader.chunkID));
+
+    return chunkID;
+}
+
+/*
+Name: getHeaderFormat
+Class: WaveFile
+Purpose: returns the format of the wave header
+Details: should be "WAVE"
+Returns: the wave header format, type string
+*/
+string WaveFile::getHeaderFormat()
+{
+    string format((char*) waveHeader.format, sizeof(waveHeader.format));
+
+    return format;
+}
+
+/*
+Name: getfmtChunkID
+Class: WaveFile
+Purpose: returns the fmt chunk ID of the wave header
+Details: should be "fmt "
+Returns: the wave header fmt chunk ID, type string
+*/
+string WaveFile::getFmtChunkID()
+{
+    string fmtChunkID((char*) waveHeader.fmtChunkID, sizeof(waveHeader.fmtChunkID));
+
+    return fmtChunkID;
+}
+
+/*
+Name: getDataChunkID
+Class: WaveFile
+Purpose: returns the data chunk ID of the data chunk header
+Details: should be "data"
+Returns: the data chunk header's ID, type string
+*/
+string WaveFile::getDataChunkID()
+{
+    string dataChunkID((char*) dataHeader.dataChunkID, sizeof(dataHeader.dataChunkID));
+
+    return dataChunkID;
 }

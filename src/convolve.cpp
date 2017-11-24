@@ -43,7 +43,7 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    dryWav.openFile(dryFileName);
+    dryWav.loadFile(dryFileName);
 
     //debug
     cout << "-----dryWav-----" << endl;
@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
     dryWav.printDataChunkHeader();
     
 
-    irWav.openFile(irFileName);
+    irWav.loadFile(irFileName);
 
     //debug
     cout << "-----irWav-----" << endl;
@@ -77,6 +77,16 @@ int main(int argc, char *argv[])
 }
 
 
+/*
+Name: convolveWav
+Purpose: Time convolution algorithm for 2 Wave files
+Details: Very slow - O(n+m) ~= O(n^2)
+Input:  
+    dryWav  -   dry recording, type WaveFile, by reference
+    irWav   -   impulse response recording, type WaveFile, by reference
+Input/Output:
+    outWav  -   the resulting convolved signal, type WaveFile, by reference
+*/
 void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
 {
     double* drySignal = dryWav.getSampleData();
@@ -109,16 +119,14 @@ void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
 
 
 
+/*
+Name: fileExists
+Purpose: check if a file exists
+Input:  
+    fileName  -   the name of the file being checked, type string, by reference
 
-/**
- * Name: fileExists
- * 
- * Checks if a file exists
- * 
- * @param[in] fileName : name of the file to check, type string
- * 
- * @return true if file exists, else false
- */
+Returns: true if file exists, else false
+*/
 bool fileExists(const std::string& fileName)
 {
     struct stat buf;
