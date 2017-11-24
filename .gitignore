@@ -35,5 +35,11 @@
 *.classpath
 *.project
 
+#vscode config stuff
+.vscode/
+
+#data stuff
+*.wav
+
 #temp stuff
 *~
