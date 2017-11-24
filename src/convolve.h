@@ -12,5 +12,7 @@
 
 bool fileExists(const std::string& fileName);
 
+void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav);
+
 
 #endif

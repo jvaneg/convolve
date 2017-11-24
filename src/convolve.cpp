@@ -8,10 +8,10 @@ int main(int argc, char *argv[])
     string dryFileName;
     string irFileName;
     string outFileName;
-    ofstream outFile;
 
     WaveFile dryWav;
     WaveFile irWav;
+    WaveFile outWav;
 
     if(argc != 4)
 	{
@@ -42,33 +42,68 @@ int main(int argc, char *argv[])
         cout << "Error: " << outFileName << " already exists!" << endl;
         exit(-1);
     }
-    
-    //maybe try opening later
-    /*
-    outFile.open(outFileName.c_str(), ios::binary | ios::out);
-    if(outFile.fail())
-    {
-        cout << "Failed to open output file!" << endl;
-        exit(-1);
-    }
-    */
 
     dryWav.openFile(dryFileName);
 
-    cout << "dryWav" << endl;
+    //debug
+    cout << "-----dryWav-----" << endl;
     dryWav.printWaveHeader();
     dryWav.printDataChunkHeader();
+    
 
     irWav.openFile(irFileName);
 
-    cout << "irWav" << endl;
+    //debug
+    cout << "-----irWav-----" << endl;
     irWav.printWaveHeader();
     irWav.printDataChunkHeader();
 
+
+    cout << "convolving..." << endl;
+    convolveWav(dryWav, irWav, outWav);
+    cout << "...convolve complete!" << endl;
+
+    //debug
+    cout << "-----outWav-----" << endl;
+    irWav.printWaveHeader();
+    irWav.printDataChunkHeader();
+
+
     cout << "writing to file" << endl;
-    dryWav.writeFile(outFileName);
+    outWav.writeFile(outFileName);
+    cout << "write successful!" << endl;
 
 
+}
+
+
+void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
+{
+    double* drySignal = dryWav.getSampleData();
+    uint32_t drySampleCount = dryWav.getSampleCount();
+    double* impulseSignal = irWav.getSampleData();
+    uint32_t impulseSampleCount = irWav.getSampleCount();
+    double* outputSignal = NULL;
+    uint32_t outputSampleCount = 0;
+    uint32_t outputSignalSize = 0;
+    uint32_t i;
+    uint32_t j;
+
+    outputSampleCount = drySampleCount + impulseSampleCount - 1;
+    outputSignal = new double[outputSampleCount](); //initializes array to 0
+    outputSignalSize = (dryWav.getBitsPerSample()/8) * outputSampleCount; 
+
+    for(i = 0; i < drySampleCount; i++)
+    {
+        for(j = 0; j < impulseSampleCount; j++)
+        {
+            outputSignal[i+j] += drySignal[i] * impulseSignal[j];
+        }
+    }
+    
+    outWav.generate(dryWav.getAudioFormat(), dryWav.getNumChannels(), dryWav.getSampleRate(), dryWav.getBitsPerSample(), outputSignalSize, outputSignal);
+
+    return;
 }
 
 

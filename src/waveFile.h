@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include <fstream>
+#include <cmath>
 
 typedef struct
 {
@@ -35,7 +36,7 @@ public:
     ~WaveFile();
     bool openFile(std::string fileName);
     bool writeFile(std::string fileName);
-    void generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, int16_t* sampleData);
+    void generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, double* sampleData);
     void printWaveHeader();
     void printDataChunkHeader();
 
@@ -44,7 +45,8 @@ public:
     uint32_t getSampleRate();
     uint16_t getBitsPerSample();
     uint32_t getDataChunkSize();
-    uint16_t* getSampleData();
+    double* getSampleData(); //be careful with me i can cause segfaults! im only here to avoid massive memory usage!
+    uint32_t getSampleCount();
 
 
 private:
@@ -55,7 +57,7 @@ private:
 
     WaveHeader waveHeader;
     DataChunkHeader dataHeader;
-    int16_t* sampleData = NULL;          //will become an array
+    double* sampleData = NULL;          //will become an array
     uint32_t sampleCount;
 
 

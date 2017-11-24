@@ -13,7 +13,7 @@ WaveFile::~WaveFile()
     sampleData = NULL;
 }
 
-void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, int16_t* sampleData)
+void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sampleRate, uint16_t bitsPerSample, uint32_t dataChunkSize, double* sampleData)
 {
     waveHeader.chunkID[0] = 'R';
     waveHeader.chunkID[1] = 'I';
@@ -46,6 +46,11 @@ void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sam
     dataHeader.dataChunkID[3] = 'a';
 
     dataHeader.dataChunkSize = dataChunkSize;
+    if(this->sampleData != NULL)
+    {
+        delete this->sampleData;
+        this->sampleData = NULL;
+    }
     this->sampleData = sampleData;
 
     sampleCount = dataHeader.dataChunkSize/(waveHeader.bitsPerSample/8);
@@ -56,6 +61,7 @@ void WaveFile::generate(uint16_t audioFormat, uint16_t numChannels, uint32_t sam
 bool WaveFile::openFile(string fileName)
 {
     ifstream inFile;
+    uint16_t sample16Bit;
 
     inFile.open(fileName.c_str(), ios::binary | ios::in);
     if(inFile.fail())
@@ -104,10 +110,11 @@ bool WaveFile::openFile(string fileName)
         return false;
     }
 
-    sampleData = new int16_t[sampleCount];
+    sampleData = new double[sampleCount];
     for(uint32_t i = 0; i < sampleCount; i++)
     {
-        inFile.read((char*) &sampleData[i], sizeof(uint16_t));
+        inFile.read((char*) &sample16Bit, sizeof(uint16_t));
+        sampleData[i] = (double) (sample16Bit/(pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with a constant
     }
 
     if(inFile.fail())
@@ -126,6 +133,7 @@ bool WaveFile::writeFile(string fileName)
 {
     ofstream outFile;
     uint8_t emptyByte = 0;
+    uint16_t sample16Bit;
 
     outFile.open(fileName.c_str(), ios::binary | ios::out);
     if(outFile.fail())
@@ -147,7 +155,19 @@ bool WaveFile::writeFile(string fileName)
     outFile.write((char*) &dataHeader, sizeof(DataChunkHeader));
     if(sampleData != NULL)
     {
-        outFile.write((char*) sampleData, dataHeader.dataChunkSize);
+        if(waveHeader.bitsPerSample == 16)
+        {
+            for(uint32_t i = 0; i < sampleCount; i++)
+            {
+                sample16Bit = (uint16_t) (sampleData[i] * (pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with constant
+                outFile.write((char*) &sample16Bit, sizeof(uint16_t));
+            }
+        }
+        else
+        {
+            cout << "Error: this program currently only supports 16-bit wavs!" << endl;
+            return false;
+        }
     }
 
     return true;
@@ -204,4 +224,39 @@ void WaveFile::printDataChunkHeader()
 {
     cout << "Subchunk2ID : " << getDataChunkID() << endl
     << "Subchunk2Size : " << dataHeader.dataChunkSize << endl;
+}
+
+uint16_t WaveFile::getAudioFormat()
+{
+    return waveHeader.audioFormat;
+}
+
+uint16_t WaveFile::getNumChannels()
+{
+    return waveHeader.numChannels;
+}
+
+uint32_t WaveFile::getSampleRate()
+{
+    return waveHeader.sampleRate;
+}
+
+uint16_t WaveFile::getBitsPerSample()
+{
+    return waveHeader.bitsPerSample;
+}
+
+uint32_t WaveFile::getDataChunkSize()
+{
+    return dataHeader.dataChunkSize;
+}
+    
+double* WaveFile::getSampleData()
+{
+    return sampleData;
+}
+
+uint32_t WaveFile::getSampleCount()
+{
+    return sampleCount;
 }
