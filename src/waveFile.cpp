@@ -178,7 +178,7 @@ bool WaveFile::writeFile(string fileName)
 {
     ofstream outFile;
     uint8_t emptyByte = 0;
-    uint16_t sample16Bit;
+    int16_t sample16Bit;
 
     outFile.open(fileName.c_str(), ios::binary | ios::out);
     if(outFile.fail())
@@ -204,8 +204,8 @@ bool WaveFile::writeFile(string fileName)
         {
             for(uint32_t i = 0; i < sampleCount; i++)
             {
-                sample16Bit = (uint16_t) (sampleData[i] * (pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with constant
-                outFile.write((char*) &sample16Bit, sizeof(uint16_t));
+                sample16Bit = (int16_t) (sampleData[i] * (pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with constant
+                outFile.write((char*) &sample16Bit, sizeof(int16_t));
             }
         }
         else

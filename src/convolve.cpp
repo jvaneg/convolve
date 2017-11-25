@@ -110,10 +110,7 @@ void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
     {
         for(j = 0; j < impulseSampleCount; j++)
         {
-            //cout << outputSignal[i+j] << endl;
             outputSignal[i+j] += drySignal[i] * impulseSignal[j];
-            //outputSignal[i+j] += 1;
-            //cout << outputSignal[i+j] << " after" << endl;
         }
     }
 
