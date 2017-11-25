@@ -97,7 +97,7 @@ Returns: true if succeeded, false if failed
 bool WaveFile::loadFile(string fileName)
 {
     ifstream inFile;
-    uint16_t sample16Bit;
+    int16_t sample16Bit;
 
     inFile.open(fileName.c_str(), ios::binary | ios::in);
     if(inFile.fail())
@@ -149,8 +149,8 @@ bool WaveFile::loadFile(string fileName)
     sampleData = new double[sampleCount];
     for(uint32_t i = 0; i < sampleCount; i++)
     {
-        inFile.read((char*) &sample16Bit, sizeof(uint16_t));
-        sampleData[i] = (double) (sample16Bit/(pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with a constant
+        inFile.read((char*) &sample16Bit, sizeof(int16_t));
+        sampleData[i] = (double) (sample16Bit/(pow(2,(waveHeader.bitsPerSample-1))-1)); //TODO replace this formula with a constant
     }
 
     if(inFile.fail())

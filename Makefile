@@ -27,7 +27,7 @@ CC=g++
 # ------Debug commands------
 # ex: DEBUG=-O2		# (make execution faster)
 # ex: DEBUG=-ggdb -Og	# (make debugging easier)
-DEBUG=
+DEBUG=-pg
 DEBUG_CMDLINE=
 
 # ------Profiling commands------

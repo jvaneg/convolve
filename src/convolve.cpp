@@ -67,8 +67,8 @@ int main(int argc, char *argv[])
 
     //debug
     cout << "-----outWav-----" << endl;
-    irWav.printWaveHeader();
-    irWav.printDataChunkHeader();
+    outWav.printWaveHeader();
+    outWav.printDataChunkHeader();
 
 
     cout << "writing to file" << endl;
@@ -103,15 +103,20 @@ void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
 
     outputSampleCount = drySampleCount + impulseSampleCount - 1;
     outputSignal = new double[outputSampleCount](); //initializes array to 0
-    outputSignalSize = (dryWav.getBitsPerSample()/8) * outputSampleCount; 
+    outputSignalSize = (dryWav.getBitsPerSample()/8) * outputSampleCount;
 
+    
     for(i = 0; i < drySampleCount; i++)
     {
         for(j = 0; j < impulseSampleCount; j++)
         {
+            //cout << outputSignal[i+j] << endl;
             outputSignal[i+j] += drySignal[i] * impulseSignal[j];
+            //outputSignal[i+j] += 1;
+            //cout << outputSignal[i+j] << " after" << endl;
         }
     }
+
     
     outWav.generate(dryWav.getAudioFormat(), dryWav.getNumChannels(), dryWav.getSampleRate(), dryWav.getBitsPerSample(), outputSignalSize, outputSignal);
 
