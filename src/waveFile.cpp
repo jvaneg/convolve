@@ -150,7 +150,11 @@ bool WaveFile::loadFile(string fileName)
     for(uint32_t i = 0; i < sampleCount; i++)
     {
         inFile.read((char*) &sample16Bit, sizeof(int16_t));
-        sampleData[i] = (double) (sample16Bit/(pow(2,(waveHeader.bitsPerSample-1))-1)); //TODO replace this formula with a constant
+        sampleData[i] = (double) ((double)sample16Bit/(pow(2,waveHeader.bitsPerSample-1)-1)); //TODO replace this formula with a constant
+        if(sampleData[i] < -1.0)
+        {
+            sampleData[i] = -1.0;
+        }
     }
 
     if(inFile.fail())
@@ -214,6 +218,8 @@ bool WaveFile::writeFile(string fileName)
             return false;
         }
     }
+
+    outFile.close();
 
     return true;
 }

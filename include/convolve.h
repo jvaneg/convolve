@@ -7,8 +7,11 @@
 #include <string>
 #include <sys/stat.h>	//stat
 #include <stdint.h>      //fixed int sizes
+#include <cmath>        //abs
 
 #include "waveFile.h"
+
+#define SWAP(a,b)  tempr=(a);(a)=(b);(b)=tempr
 
 /*
 Name: fileExists
@@ -30,7 +33,13 @@ Input:
 Input/Output:
     outWav  -   the resulting convolved signal, type WaveFile, by reference
 */
-void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav);
+void timeConvolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav);
+
+void normalizeSignal(double* signal, uint32_t signalSize);
+
+void timeConvolve(double drySignal[], uint32_t drySampleCount, double impulseSignal[], uint32_t impulseSampleCount, double outputSignal[]);
+
+void fastFourierTransform(double data[], int n, int isign);
 
 
 #endif
