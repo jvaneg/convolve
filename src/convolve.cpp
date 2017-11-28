@@ -62,7 +62,7 @@ int main(int argc, char *argv[])
 
 
     cout << "convolving..." << endl;
-    timeConvolveWav(dryWav, irWav, outWav);
+    convolveWav(dryWav, irWav, outWav);
     cout << "...convolve complete!" << endl;
 
     //debug
@@ -88,7 +88,7 @@ Input:
 Input/Output:
     outWav  -   the resulting convolved signal, type WaveFile, by reference
 */
-void timeConvolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
+void convolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
 {
     double* drySignal = dryWav.getSampleData();
     uint32_t drySampleCount = dryWav.getSampleCount();
@@ -102,7 +102,8 @@ void timeConvolveWav(WaveFile& dryWav, WaveFile& irWav, WaveFile& outWav)
     outputSignal = new double[outputSampleCount](); //initializes array to 0
     outputSignalSize = (dryWav.getBitsPerSample()/8) * outputSampleCount;
 
-    timeConvolve(drySignal, drySampleCount, impulseSignal, impulseSampleCount, outputSignal);
+    //timeConvolve(drySignal, drySampleCount, impulseSignal, impulseSampleCount, outputSignal);
+    convolveFFT(drySignal, drySampleCount, impulseSignal, impulseSampleCount, outputSignal, outputSampleCount);
 
     normalizeSignal(outputSignal, outputSampleCount);
 
@@ -242,7 +243,7 @@ void fastFourierTransform(double data[], int n, int isign) //TODO: change this s
     while (nn > mmax)   //Outer loop executed log2(n) times
     {
 		istep = mmax << 1;
-		theta = isign * (6.28318530717959 / mmax);      //initialize the trigonometric recurrence
+		theta = isign * (6.28318530717959 / (double) mmax);      //initialize the trigonometric recurrence //maybe casting a double is bad!!!!!!!!!!!!!
 		wtemp = sin(0.5 * theta);
 		wpr = -2.0 * wtemp * wtemp;
 		wpi = sin(theta);
@@ -266,4 +267,113 @@ void fastFourierTransform(double data[], int n, int isign) //TODO: change this s
 		}
 		mmax = istep;
 	}
+}
+
+
+void convolveFFT(double drySignal[], uint32_t drySampleCount, double impulseSignal[], uint32_t impulseSampleCount, double outputSignal[], uint32_t outputSampleCount) //TODO in progress
+{
+    uint32_t freqSignalSize;
+    uint32_t complexFreqSignalSize;
+	double* dryFreqSignal;
+	double* irFreqSignal;
+    double* outFreqSignal;
+    
+    //ensures freq signal arrays are powers of 2 for the FFT
+	freqSignalSize = 1;
+    while (freqSignalSize < outputSampleCount) 
+    {
+		freqSignalSize *= 2;
+    }
+    
+    complexFreqSignalSize = freqSignalSize*2; //because complex data comes in pairs (real, imaginary)
+	
+	dryFreqSignal = new double[complexFreqSignalSize]();  //initialized to zero
+	irFreqSignal = new double[complexFreqSignalSize]();   //initialized to zero
+    outFreqSignal  = new double[complexFreqSignalSize](); //initialized to zero
+    
+    fftPrep(dryFreqSignal, freqSignalSize, drySignal, drySampleCount);
+    fftPrep(irFreqSignal, freqSignalSize, impulseSignal, impulseSampleCount);
+
+	fastFourierTransform((dryFreqSignal - 1), freqSignalSize, NORMAL_FFT);
+    fastFourierTransform((irFreqSignal - 1), freqSignalSize, NORMAL_FFT);
+
+	complexMultiply(dryFreqSignal, irFreqSignal, outFreqSignal, complexFreqSignalSize);
+
+    fastFourierTransform((outFreqSignal - 1), freqSignalSize, INVERSE_FFT);
+
+	//scale(outFreqSignal, complexFreqSignalSize); //idk what this is doing
+
+    /*
+    for (uint32_t i = 0; i < outputSampleCount; i += 2) //idk what this is doing
+    { 
+		outputSignal[i] = outFreqSignal[i * 2];
+		outputSignal[i + 1] = outFreqSignal[(i + 1) * 2];
+    }
+    */
+
+    for (uint32_t i = 0; i < outputSampleCount; i++) //idk what this is doing, JOELS VERSION
+    { 
+		outputSignal[i] = outFreqSignal[i*2];
+    }
+    
+    //normalizeSignal(outputSignal, outputSampleCount);
+
+    delete[] dryFreqSignal;
+    delete[] irFreqSignal;
+    delete[] outFreqSignal;
+
+	return;
+}
+
+/*
+Name: complexMultiply
+Purpose: Performs the frequency domain complex multiplication (occurs on real and imaginary sections of array)
+         array structure [real i, imaginary i, real i+1, imaginary i+1, ..., real n, imaginary n]
+Details: Assumes complexFreqSignalSize is a multiple of 2.
+         Assumes all arrays are the same size.
+Input:
+    dryFreqSignal[] -   frequency domain dry input signal
+    irFreqSignal[]  -   frequency domain impulse response signal (aka filter kernel)
+    outFreqSignal[] -   frequency domain result signal
+    complexFreqSignalSize   -   size of the arrays
+*/
+void complexMultiply(double dryFreqSignal[], double irFreqSignal[], double outFreqSignal[], uint32_t complexFreqSignalSize) 
+{
+    for (uint32_t  i = 0; i < complexFreqSignalSize; i += 2)  //complex multiplication
+    { 
+		outFreqSignal[i] = (dryFreqSignal[i] * irFreqSignal[i]) - (dryFreqSignal[i + 1] * irFreqSignal[i + 1]);         //RE_OUT[i] = RE_X[i]*RE_FR[i] - IM_X[i]*IM_FR[i]
+		outFreqSignal[i + 1 ] = (dryFreqSignal[i] * irFreqSignal[i + 1]) - (dryFreqSignal[i + 1] * irFreqSignal[i]);    //IM_OUT[i] = RE_X[i]*IM_FR[i] + IM_X[i]*RE_FR[i]
+	}
+}
+
+/*
+Name: fftPrep
+Purpose: prepares frequency signal array for fft by converting it to a complex number format
+Details: Assumes input array freqSignal[] is zeroed
+
+Input:
+    freqSignal[]    -   array containing the frequency signal
+    freqSize    -   size of the freqSignal array, assumed to be zeroed
+    timeSignal[]    -   array containing the time signal
+    timeSize    -   size of the timeSignal array
+*/
+void fftPrep(double freqSignal[], uint32_t freqSize, double timeSignal[], uint32_t timeSize) 
+{
+    uint32_t index;
+    uint32_t complexIndex;
+    for (index = 0, complexIndex = 0; index < timeSize; index++, complexIndex += 2) 
+    {
+		freqSignal[complexIndex] = timeSignal[index];
+	}
+}
+
+
+void scale(double X[], uint32_t N) {
+    uint32_t k,i;
+    
+    //cout << "scaling" <<endl;
+	for (i = 0, k = 0; k < N; k++,i++) {
+		X[i] /= (double)N;
+    }
+    //cout << "done scaling" << endl;
 }
