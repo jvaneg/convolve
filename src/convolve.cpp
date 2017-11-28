@@ -45,37 +45,46 @@ int main(int argc, char *argv[])
         exit(-1);
     }
 
-    dryWav.loadFile(dryFileName);
-
-    //debug
-    cout << "-----dryWav-----" << endl;
-    dryWav.printWaveHeader();
-    dryWav.printDataChunkHeader();
+    cout << "Loading " << dryFileName << "..." << endl;
+    if(dryWav.loadFile(dryFileName))
+    {
+        cout << "...Loading complete!" << endl;
+    }
+    else
+    {
+        cout << "Error occurred loading " << dryFileName << "!" << endl;
+        exit(-1);
+    }
     
+    cout << "Loading " << irFileName << "..." << endl;
+    if(irWav.loadFile(irFileName))
+    {
+        cout << "...Loading complete!" << endl;
+    }
+    else
+    {
+        cout << "Error occurred loading " << irFileName << "!" << endl;
+        exit(-1);
+    }
 
-    irWav.loadFile(irFileName);
 
-    //debug
-    cout << "-----irWav-----" << endl;
-    irWav.printWaveHeader();
-    irWav.printDataChunkHeader();
-
-
-    cout << "convolving..." << endl;
+    cout << "Convolving..." << endl;
     convolveWav(dryWav, irWav, outWav);
-    cout << "...convolve complete!" << endl;
-
-    //debug
-    cout << "-----outWav-----" << endl;
-    outWav.printWaveHeader();
-    outWav.printDataChunkHeader();
+    cout << "...Convolution complete!" << endl;
 
 
-    cout << "writing to file" << endl;
-    outWav.writeFile(outFileName);
-    cout << "write successful!" << endl;
-
-
+    cout << "Writing result to " << outFileName << "..." << endl;
+    if(outWav.writeFile(outFileName))
+    {
+        cout << "...Write successful!" << endl;
+    }
+    else
+    {
+        cout << "Error occurred writing result to " << irFileName << "!" << endl;
+        exit(-1);
+    }
+    
+    return 0;
 }
 
 
@@ -200,20 +209,22 @@ void timeConvolve(double drySignal[], uint32_t drySampleCount, double impulseSig
     calling the routine (see main() below).
 
 Name: fastFourierTransform
-Purpose:
+Purpose: Converts a time domain signal into a frequency domain signal
 
-Details: I have no idea what this code is doing I copied it from a book.
+Details: O(nlog(n)) so nice speed compared to time convolution
+         I have no idea what this code is doing I copied it from a book.
          This code assumes the array starts at index 1, not 0, so subtract 1 when
-         calling the routine (wtf???)
+         calling the routine (wtf???).
+         Assumes time domain dignal has been padded to complex data form (real, imaginary) pairs
 
 Input:
-    data[]  -   the signal to be transformed, size must be n*2
+    data[]  -   the signal to be transformed, size must be n*2, in complex data form
     n  -    the size of the data array (kindof, data is twice as big because it is complex),
             must be a power of two
     isign   -   ??? +1 for an FFT, -1 for an Inverse FFT
 
 */
-void fastFourierTransform(double data[], int n, int isign) //TODO: change this so it isnt 1 indexed (is this worth the headache?)
+void fastFourierTransform(double data[], int n, int isign)
 {
 	uint64_t nn, mmax, m, j, istep, i;
 	double wtemp, wr, wpr, wpi, wi, theta;
@@ -297,26 +308,16 @@ void convolveFFT(double drySignal[], uint32_t drySampleCount, double impulseSign
 	fastFourierTransform((dryFreqSignal - 1), freqSignalSize, NORMAL_FFT);
     fastFourierTransform((irFreqSignal - 1), freqSignalSize, NORMAL_FFT);
 
-	complexMultiply(dryFreqSignal, irFreqSignal, outFreqSignal, complexFreqSignalSize);
+    complexMultiply(dryFreqSignal, irFreqSignal, outFreqSignal, complexFreqSignalSize);
 
     fastFourierTransform((outFreqSignal - 1), freqSignalSize, INVERSE_FFT);
 
-	//scale(outFreqSignal, complexFreqSignalSize); //idk what this is doing
+    scaleFFT(outFreqSignal, complexFreqSignalSize);
 
-    /*
-    for (uint32_t i = 0; i < outputSampleCount; i += 2) //idk what this is doing
-    { 
-		outputSignal[i] = outFreqSignal[i * 2];
-		outputSignal[i + 1] = outFreqSignal[(i + 1) * 2];
-    }
-    */
-
-    for (uint32_t i = 0; i < outputSampleCount; i++) //idk what this is doing, JOELS VERSION
+    for (uint32_t i = 0; i < outputSampleCount; i++)
     { 
 		outputSignal[i] = outFreqSignal[i*2];
     }
-    
-    //normalizeSignal(outputSignal, outputSampleCount);
 
     delete[] dryFreqSignal;
     delete[] irFreqSignal;
@@ -342,7 +343,7 @@ void complexMultiply(double dryFreqSignal[], double irFreqSignal[], double outFr
     for (uint32_t  i = 0; i < complexFreqSignalSize; i += 2)  //complex multiplication
     { 
 		outFreqSignal[i] = (dryFreqSignal[i] * irFreqSignal[i]) - (dryFreqSignal[i + 1] * irFreqSignal[i + 1]);         //RE_OUT[i] = RE_X[i]*RE_FR[i] - IM_X[i]*IM_FR[i]
-		outFreqSignal[i + 1 ] = (dryFreqSignal[i] * irFreqSignal[i + 1]) - (dryFreqSignal[i + 1] * irFreqSignal[i]);    //IM_OUT[i] = RE_X[i]*IM_FR[i] + IM_X[i]*RE_FR[i]
+		outFreqSignal[i + 1 ] = (dryFreqSignal[i] * irFreqSignal[i + 1]) + (dryFreqSignal[i + 1] * irFreqSignal[i]);    //IM_OUT[i] = RE_X[i]*IM_FR[i] + IM_X[i]*RE_FR[i]
 	}
 }
 
@@ -367,13 +368,18 @@ void fftPrep(double freqSignal[], uint32_t freqSize, double timeSignal[], uint32
 	}
 }
 
+/*
+Name: scaleFFT
+Purpose: not really sure what this does actually, I think its like normalizing
 
-void scale(double X[], uint32_t N) {
-    uint32_t k,i;
-    
-    //cout << "scaling" <<endl;
-	for (i = 0, k = 0; k < N; k++,i++) {
-		X[i] /= (double)N;
+Input:
+    signal[]    -   array containing the frequency signal
+    signalSize    -   size of the signal array
+*/
+void scaleFFT(double signal[], uint32_t signalSize) 
+{    
+    for (uint32_t i = 0; i < signalSize; i++) 
+    {
+		signal[i] /= (double) signalSize;
     }
-    //cout << "done scaling" << endl;
 }

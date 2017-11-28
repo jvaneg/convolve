@@ -70,7 +70,6 @@ void complexMultiply(double dryFreqSignal[], double irFreqSignal[], double outFr
 
 void fftPrep(double freqSignal[], uint32_t freqSize, double timeSignal[], uint32_t timeSize);
 
-void scale(double X[], uint32_t N);
-
+void scaleFFT(double signal[], uint32_t signalSize);
 
 #endif

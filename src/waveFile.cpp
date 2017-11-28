@@ -13,7 +13,7 @@ Purpose: Default constructor for the WaveFile class
 */
 WaveFile::WaveFile()
 {
-    //todo
+    //nothing here
 }
 
 /*
