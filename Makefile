@@ -13,6 +13,8 @@
 ##############################################
 # Set up the project-specific options
 EXEC=convolve
+# C++ version ex: -ansi, -std=c++11
+CV=
 # Libraries
 LIBS=
 # Special compile flags
@@ -53,7 +55,7 @@ DEPS=$(OBJECTS:.o=.d)
 PROFS=$(OBJECTS:.o=.gcda) $(OBJECTS:.o=.gcno)
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LIBS) $(LIBDIRS)
-CFLAGS=$(DEBUG) $(PROFILE) -c $(LIBDIRS) $(INCLUDES) $(SCFLAGS)
+CFLAGS=$(DEBUG) $(PROFILE) $(CV) -c $(LIBDIRS) $(INCLUDES) $(SCFLAGS)
 EXECUTABLE=$(BINDIR)/$(EXEC)
 
 all:	$(EXECUTABLE)
