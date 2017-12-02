@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
         cout << "Error occurred writing result to " << irFileName << "!" << endl;
         exit(-1);
     }
-    
+
     return 0;
 }
 
